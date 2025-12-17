@@ -1,39 +1,51 @@
-# [Revan] SCP 049 System
+# [Augaton] SCP-049 System
 
-## Steam Workshop
-![Steam Views](https://img.shields.io/steam/views/3302753364?color=red&style=for-the-badge)
-![Steam Downloads](https://img.shields.io/steam/downloads/3302753364?color=red&style=for-the-badge)
-![Steam Favorites](https://img.shields.io/steam/favorites/3302753364?color=red&style=for-the-badge)
+## 📦 Steam Workshop
+![Steam Views](https://img.shields.io/steam/views/3489863065?color=red&style=for-the-badge)
+![Steam Downloads](https://img.shields.io/steam/downloads/3489863065?color=red&style=for-the-badge)
+![Steam Favorites](https://img.shields.io/steam/favorites/3489863065?color=red&style=for-the-badge)
 
-This addon is available on the Workshop just [here](https://steamcommunity.com/sharedfiles/filedetails/?id=3397375941)!
+🔗 **Workshop Link:**  
+https://steamcommunity.com/sharedfiles/filedetails/?id=3489863065
 
-> [!IMPORTANT]
-> Look for required content in the workshop version of the addon without it, the addon will not work !
-> Check to get the latest version every time !
+---
 
-## Commands
-+ Eveythings in game, with the Guthen Base !
+## 📌 Description
+TODO
 
-## Features
-Contains a SWEP, of class `scp049`, designed for multiplayer:
-+ **Left Mouse Button**: You will be able **to transform** your victims in order **to heal** them and turn them **into your zombies.**
-+ **Right Mouse Button**: to Play a random sound
-+ **Reload**: Menu to choose the Type of zombies
-+ **Calms down** with the lavander (SOON)
-+ Configurable in-game with [[GuthSCP] Base](https://steamcommunity.com/sharedfiles/filedetails/?id=3034737316) (`guthscp_menu` in your console)
-    + **Health**: If SCP 049 is Immortal ? And how time it takes to heal his zombies
-    + **Sound**: Custom sounds played random
-    + **Full translation system**
-    + **A Progression to you "Operation" as SCP 049 when you "Heal" your victim**
-    + ***and more..***
-+ **DarkRP Dependant or variant**
-+ **Custom compatibility with:**
-    + [[GuthSCP] Keycard](https://steamcommunity.com/sharedfiles/filedetails/?id=3034740776)
+> ⚠️ **IMPORTANT**  
+> This addon requires additional content listed on the Workshop page.  
+> Without the required content, the addon will **not function correctly**.
 
-## Legal Terms
-This addon is licensed under [Creative Commons Sharealike 3.0](https://creativecommons.org/licenses/by-sa/3.0/) and is based on content of [SCP Foundation](http://scp-wiki.wikidot.com/)
+---
 
-If you create something derived from this, please credit me and tell me what you done.
+## 🔧 Features
+TODO
 
-## Credit
-Thanks to Guthen and Certurix for their Helps!
+---
+
+## 📥 Installation
+1. Subscribe to the addon on the Steam Workshop
+2. Subscribe to **all required content** listed on the Workshop page
+3. Restart your server or game
+4. Configure or integrate the system as needed for your SCP framework
+
+---
+
+## 📜 Legal Terms
+This addon is licensed under the  
+**Creative Commons Attribution-ShareAlike 3.0 (CC BY-SA 3.0)**  
+https://creativecommons.org/licenses/by-sa/3.0/
+
+This project is based on content from the **SCP Foundation**:  
+http://scp-wiki.wikidot.com/
+
+### Derivative Works
+If you create content derived from this addon:
+- Proper credit is required
+- You may inform me about your project if you wish
+
+---
+
+## ❤️ Credits
+- **Guthen** — huge thanks for the help and contributions!

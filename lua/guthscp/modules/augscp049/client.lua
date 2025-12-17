@@ -1,5 +1,5 @@
-local revscp049 = guthscp.modules.revscp049
-local config049 = guthscp.configs.revscp049
+local augscp049 = guthscp.modules.augscp049
+local config049 = guthscp.configs.augscp049
 scp049 = scp049 or {}
 
 surface.CreateFont('scp-sweps1', {
@@ -21,8 +21,8 @@ local function ButtonClick(a)
 end
 
 local ModelCol = {}
-function revscp049.ZombieMenu()
-    local zombietypes = revscp049.GetZombieTypes049()
+function augscp049.ZombieMenu()
+    local zombietypes = augscp049.GetZombieTypes049()
 
     for k, v in ipairs(zombietypes) do
         ModelCol[k] = Color(68, 68, 68, 255)

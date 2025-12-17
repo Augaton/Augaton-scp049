@@ -6,8 +6,8 @@ if not guthscp then
 end
 
 if not scp049 then scp049 = {} end
-local revscp049 = guthscp.modules.revscp049
-local config049 = guthscp.configs.revscp049
+local augscp049 = guthscp.modules.augscp049
+local config049 = guthscp.configs.augscp049
 
 local dist_sqr = 125 * 125 -- second number is the threshold distance between the player and the scp
 
@@ -92,7 +92,7 @@ local function HealZombie(self, target)
         self.LastHealTime = 0
     end
 
-    local healTime = (guthscp and guthscp.configs and guthscp.configs.revscp049 and guthscp.configs.revscp049.heal_time) or 2
+    local healTime = (guthscp and guthscp.configs and guthscp.configs.augscp049 and guthscp.configs.augscp049.heal_time) or 2
 
     if CurTime() > self.LastHealTime + healTime then
         local maxHealth = target:GetMaxHealth()
@@ -118,7 +118,7 @@ function SWEP:Think()
     if CLIENT then
         if self.Owner:KeyPressed(IN_RELOAD) then
             if not IsValid(SCPZombieMenu) then
-                revscp049.ZombieMenu()
+                augscp049.ZombieMenu()
             end
         end
     end
@@ -155,7 +155,7 @@ function SWEP:Think()
     local trace = self:GetOwner():GetEyeTrace()
     local target = trace.Entity
     local holdType = "normal"
-    if target:IsPlayer() and not guthscp.is_scp(target) and target:GetPos():DistToSqr(self:GetOwner():GetPos()) <= dist_sqr and not revscp049.is_scp_049_zombie(target) then
+    if target:IsPlayer() and not guthscp.is_scp(target) and target:GetPos():DistToSqr(self:GetOwner():GetPos()) <= dist_sqr and not augscp049.is_scp_049_zombie(target) then
         holdType = "pistol"
     end
 
@@ -164,16 +164,16 @@ end
 
 scp049.Zombies = scp049.Zombies or 0
 
-function revscp049.is_scp_049_zombie(ply)
+function augscp049.is_scp_049_zombie(ply)
     return ply:GetNWBool("IsZombie", false)
 end
 
 function SWEP:CallRagdollTarget(owner, target)
-    if revscp049.is_scp_049_zombie(target) then
+    if augscp049.is_scp_049_zombie(target) then
         return
     end
 
-    local zombietypes = revscp049.GetZombieTypes049()
+    local zombietypes = augscp049.GetZombieTypes049()
 
     target:SetNoDraw(true)
     target:Lock()
@@ -214,7 +214,7 @@ function SWEP:CallRagdollTarget(owner, target)
             target:SetRunSpeed(zombieData.speed)
             target:SetNWBool("IsZombie", true)
             target:StripWeapons()
-            target:Give("revscp049_zombie")
+            target:Give("augscp049_zombie")
 
             scp049.Zombies = scp049.Zombies + 1
 
@@ -258,17 +258,17 @@ function SWEP:PrimaryAttack()
         self:SetNextPrimaryFire(CurTime() + 3)
         
         if IsValid(target) and (target:IsPlayer() or target:IsNPC()) then
-            if revscp049.is_scp_049_zombie(target) then
+            if augscp049.is_scp_049_zombie(target) then
                 guthscp.player_message( self:GetOwner(), config049.translation_3 )
                 return
             end
         
-            local ignoreSCPs = guthscp.configs.revscp049.ignore_scps
+            local ignoreSCPs = guthscp.configs.augscp049.ignore_scps
             if ignoreSCPs and guthscp.is_scp(target) then
                 return
             end
         
-            local ignoreTeams = guthscp.configs.revscp049.ignore_teams
+            local ignoreTeams = guthscp.configs.augscp049.ignore_teams
             local targetTeam = target:Team()
             local teamKeyName = guthscp.get_team_keyname(targetTeam)
             
@@ -277,7 +277,7 @@ function SWEP:PrimaryAttack()
             end
         
             scp049.Zombies = scp049.Zombies or 0
-            if scp049.Zombies >= guthscp.configs.revscp049.zb_limits and guthscp.configs.revscp049.zb_limits ~= 0 then
+            if scp049.Zombies >= guthscp.configs.augscp049.zb_limits and guthscp.configs.augscp049.zb_limits ~= 0 then
                 guthscp.player_message( self:GetOwner(), config049.translation_4 )
                 return
             end
@@ -317,7 +317,7 @@ function SWEP:DrawHUD()
 	if not IsValid( ply ) or not ply:Alive() then return end
 
     if ply:GetNWBool("scp049_Infected") then
-        if IsValid(wep) and revscp049.is_scp_049(ply) then
+        if IsValid(wep) and augscp049.is_scp_049(ply) then
             local progress = wep:GetNWFloat("Progress", 0)
 
             surface.SetDrawColor(50, 50, 50, 220)

@@ -1,35 +1,10 @@
---[[
-	Fonctionnalités:
-		- Clic gauche: Transformer le joueur en zombie
-		- Reload: Menu Types de Zombies
-		- Animation de la main lorsque 049 est proche d'un joueur non zombie (configurable)
-		- Animation lors de l'infection
-		- Barre de progression pour infecter un joueur (configurable)
-		- Particules lors de l'infection (configurable)
-		- QTE pour éviter d'être infecté (configurable)
-
-		- Voir les zombies à travers les murs (configurable)
-		- Nombre maximal de zombies (configurable)
-		- Les zombies ne peuvent pas ouvrir les portes (configurable)
-		- Permettre aux zombies de parler qu'à 049 ou Alors les empêcher de parler (Configurable)
-		- SCP 049 Immortel (configurable)
-		- SCP 049 ne peux pas sauter (configurable)
-
-		- Vitesse de marche pour SCP-049 & zombies (configurable)
-		- SWEP Lavende pour bypass PrimaryAttack
-		- SWEP Lavende permet de voir le joueur qui le possède en évidence (Configurable)
-		- Système de traduction (configurable)
-		- Sons aléatoire jouer par 049 (Configurable)
-		- Délai de guérison des zombies par 049 (Configurable)
-]]--
-
 local MODULE = {
     name = "SCP-049",
     author = "RevanAngel",
     version = "1.1.0",
     description = "Be the doctor. Heal your patients",
     icon = "icon16/user.png",
-	version_url = "https://raw.githubusercontent.com/Revan-Angel/scp049-guthen/refs/heads/main/lua/guthscp/modules/revscp049/main.lua?",
+	version_url = "https://raw.githubusercontent.com/Revan-Angel/scp049-guthen/refs/heads/main/lua/guthscp/modules/augscp049/main.lua?",
     dependencies = {
 		base = "2.4.0",
 		guthscpkeycard = "optional:2.1.6",
@@ -334,5 +309,5 @@ function MODULE:init()
     MODULE:info("The 049 system has been loaded !")
 end
 
-guthscp.module.hot_reload("revscp049")
+guthscp.module.hot_reload("augscp049")
 return MODULE

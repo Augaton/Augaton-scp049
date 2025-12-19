@@ -59,8 +59,28 @@ local soundcd = 0
 scp049.Zombies = 0
 local ZombieType = scp049.DefaultZombieType
 
-net.Receive('scp049-change-zombie', function()
-    ZombieType = net.ReadInt(7)
+net.Receive('scp049-change-zombie', function(len, ply)
+    if not IsValid(ply) or not augscp049.is_scp_049(ply) then 
+        return 
+    end
+
+    if (ply.nextZombieChange or 0) > CurTime() then
+        ply:ChatPrint("Veuillez attendre avant de changer de type à nouveau.")
+        return
+    end
+    ply.nextZombieChange = CurTime() + 1
+
+    local zombieID = net.ReadInt(7)
+    local zombieTypes = augscp049.GetZombieTypes049()
+
+    if not zombieTypes[zombieID] then 
+        return 
+    end
+
+    ply.selectedZombieType049 = zombieID
+    
+    local name = zombieTypes[zombieID].name
+    ply:ChatPrint("Votre prochain zombie sera un : " .. name)
 end)
 
 hook.Add('PlayerDeathThink', 'scp049-death', function(ply)

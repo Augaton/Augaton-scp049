@@ -2,164 +2,153 @@ if SERVER then
     AddCSLuaFile()
 end
 
+-- --- Configuration du SWEP ---
 SWEP.PrintName = "SCP-049-2"
 SWEP.Author = "RevanAngel"
 SWEP.Category = "GuthSCP"
-SWEP.Purpose = "Clique droit pour attaquer! R pour crier!"
+SWEP.Instructions = "G: Attaquer | D: Crier | R: Bondir (Leap)"
 
 SWEP.Spawnable = true
-SWEP.AdminSpawnable = true
+SWEP.AdminOnly = false
 
 SWEP.ViewModel = "models/weapons/c_arms.mdl"
-SWEP.UseHands = true
 SWEP.WorldModel = ""
+SWEP.UseHands = true
 
 SWEP.Primary.ClipSize = -1
 SWEP.Primary.DefaultClip = -1
 SWEP.Primary.Automatic = true
-SWEP.Primary.Delay = 0.5
-SWEP.Primary.Ammo = ""
-SWEP.PrimaryAttackAnimation = "attack"
-SWEP.SecondaryAttackAnimation = "attack2"
-SWEP.ReloadAnimation = "reload"
-SWEP.UseHands = true
+SWEP.Primary.Delay = 0.6
 
 SWEP.Secondary.ClipSize = -1
 SWEP.Secondary.DefaultClip = -1
-SWEP.Secondary.Automatic = true
-SWEP.Secondary.Delay = 0.5
-SWEP.Secondary.Ammo = ""
+SWEP.Secondary.Automatic = false
 
-SWEP.PrimaryAttackSound = Sound("npc/zombie/claw_miss1.wav")
-SWEP.SecondaryAttackSound = Sound("npc/zombie/claw_strike1.wav")
-SWEP.ReloadSound = Sound("weapons/fists/reload.wav")
+-- --- Variables Internes ---
+local hitSounds = {
+    "npc/zombie/zombie_hit.wav",
+    "npc/zombie/zo_attack2.wav",
+    "npc/zombie/zo_attack1.wav"
+}
+
+local idleSounds = {
+    "npc/zombie/zombie_voice_idle1.wav",
+    "npc/zombie/zombie_voice_idle11.wav",
+    "npc/zombie/zombie_voice_idle10.wav",
+    "npc/zombie/zombie_voice_idle9.wav",
+    "npc/zombie/zombie_voice_idle8.wav",
+    "npc/zombie/zombie_voice_idle7.wav",
+}
+
+-- --- Fonctions de Base ---
 
 function SWEP:Initialize()
-
-	self:SetHoldType( "normal" )
-	
-	self.ActivityTranslate[ ACT_MP_STAND_IDLE ]					= ACT_HL2MP_IDLE_ZOMBIE
-	self.ActivityTranslate[ ACT_MP_WALK ]						= ACT_HL2MP_WALK_ZOMBIE_01
-	self.ActivityTranslate[ ACT_MP_RUN ]						= ACT_HL2MP_RUN_ZOMBIE
-	self.ActivityTranslate[ ACT_MP_CROUCH_IDLE ]				= ACT_HL2MP_IDLE_CROUCH_ZOMBIE
-	self.ActivityTranslate[ ACT_MP_CROUCHWALK ]					= ACT_HL2MP_WALK_CROUCH_ZOMBIE_01
-	self.ActivityTranslate[ ACT_MP_ATTACK_STAND_PRIMARYFIRE ]	= ACT_GMOD_GESTURE_RANGE_ZOMBIE
-	self.ActivityTranslate[ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE ]	= ACT_GMOD_GESTURE_RANGE_ZOMBIE
-	self.ActivityTranslate[ ACT_MP_JUMP ]						= ACT_ZOMBIE_LEAPING
-	self.ActivityTranslate[ ACT_RANGE_ATTACK1 ]					= ACT_GMOD_GESTURE_RANGE_ZOMBIE
-
+    self:SetHoldType("normal")
 end
 
+function SWEP:Deploy()
+    self:SetHoldType("normal")
+    return true
+end
+
+function SWEP:TranslateActivity(act)
+    local activities = {
+        [ACT_MP_STAND_IDLE] = ACT_HL2MP_IDLE_ZOMBIE,
+        [ACT_MP_WALK] = ACT_HL2MP_WALK_ZOMBIE_01,
+        [ACT_MP_RUN] = ACT_HL2MP_RUN_ZOMBIE,
+        [ACT_MP_CROUCH_IDLE] = ACT_HL2MP_IDLE_CROUCH_ZOMBIE,
+        [ACT_MP_CROUCHWALK] = ACT_HL2MP_WALK_CROUCH_ZOMBIE_01,
+        [ACT_MP_JUMP] = ACT_ZOMBIE_LEAPING,
+    }
+    return activities[act] or act
+end
+
+-- --- Attaque (Clic Gauche) ---
+
 function SWEP:PrimaryAttack()
-    self:SetNextPrimaryFire(CurTime() + 0.5)
-    self.Owner:SetAnimation(PLAYER_ATTACK1)
-    self:SendWeaponAnim(ACT_VM_PRIMARYATTACK)
+    self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
 
-    local range = 80
-    local radius = 15
+    local owner = self:GetOwner()
+    owner:SetAnimation(PLAYER_ATTACK1)
 
-    local startPos = self.Owner:GetShootPos()
-    local endPos = startPos + self.Owner:GetAimVector() * range
+    if not IsFirstTimePredicted() then return end
 
-    local minBounds = Vector(-radius, -radius, -radius)
-    local maxBounds = Vector(radius, radius, radius)
+    if CLIENT then self:SendWeaponAnim(ACT_VM_PRIMARYATTACK) end
+
+    local range = 85
+    local startPos = owner:GetShootPos()
+    local endPos = startPos + owner:GetAimVector() * range
 
     local trace = util.TraceHull({
         start = startPos,
         endpos = endPos,
-        filter = self.Owner,
-        mins = minBounds,
-        maxs = maxBounds
+        filter = owner,
+        mins = Vector(-15, -15, -15),
+        maxs = Vector(15, 15, 15),
+        mask = MASK_SHOT_HULL
     })
 
-    if IsValid(trace.Entity) and not trace.Entity:IsNPC() then
+    if IsValid(trace.Entity) then
+        self:EmitSound(table.Random(hitSounds), 75, 100)
+
         if SERVER then
-            trace.Entity:TakeDamage(20, self.Owner, self)
-            local attackSounds = {
-                "npc/zombie/zombie_hit.wav",
-                "npc/zombie/zo_attack2.wav",
-                "npc/zombie/zo_attack1.wav"
-            }
-            local attackSound = table.Random(attackSounds)
-            self.Owner:EmitSound(attackSound)
+            local dmg = DamageInfo()
+            dmg:SetDamage(25)
+            dmg:SetAttacker(owner)
+            dmg:SetInflictor(self)
+            dmg:SetDamageType(DMG_CLUB)
+            trace.Entity:TakeDamageInfo(dmg)
         end
 
         local effectData = EffectData()
-        effectData:SetStart(startPos)
         effectData:SetOrigin(trace.HitPos)
         effectData:SetNormal(trace.HitNormal)
         util.Effect("BloodImpact", effectData)
     else
-        self:EmitSound("npc/zombie/claw_miss1.wav")
+        self:EmitSound("npc/zombie/claw_miss1.wav", 75, 100)
     end
 end
 
+-- --- Cri (Clic Droit) ---
 
 function SWEP:SecondaryAttack()
-    if SERVER and IsValid(self.Owner) then
-        self.Owner:DoAnimationEvent(ACT_GMOD_GESTURE_TAUNT_ZOMBIE)
-        
-        if self.SoundPlaying then return end
-
-        local sounds = {
-            "npc/zombie/zombie_voice_idle1.wav",
-            "npc/zombie/zombie_voice_idle11.wav",
-            "npc/zombie/zombie_voice_idle10.wav",
-            "npc/zombie/zombie_voice_idle9.wav",
-            "npc/zombie/zombie_voice_idle8.wav",
-            "npc/zombie/zombie_voice_idle7.wav",
-            "npc/zombie/zombie_voice_idle6.wav",
-            "npc/zombie/zombie_voice_idle5.wav",
-            "npc/zombie/zombie_voice_idle4.wav",
-        }
-
-        local randomSound = sounds[math.random(1, #sounds)]
-
-        self.Owner:EmitSound(randomSound)
-
-        self.SoundPlaying = true
-
-        timer.Simple(SoundDuration(randomSound), function()
-            self.SoundPlaying = false
-        end)
-    end
-end
-
-
-function SWEP:Reload()
-    if SERVER and IsValid(self.Owner) then
-        if not self.IsReloading then
-            self.IsReloading = true
-            
-            local reloadSounds = {
-                "npc/zombie_poison/pz_call1.wav"
-            }
-            local reloadSound = table.Random(reloadSounds)
-            
-            self.Owner:EmitSound(reloadSound)
-            
-            self.Owner:DoAnimationEvent(ACT_GMOD_GESTURE_TAUNT_ZOMBIE)
-
-            local reloadDelay = 1
-            timer.Simple(reloadDelay, function()
-                self.IsReloading = false
-            end)
+    if (self.NextScream or 0) > CurTime() then return end
+    self.NextScream = CurTime() + 2
+    
+    if IsFirstTimePredicted() then
+        self:EmitSound(table.Random(idleSounds), 75, 100)
+        if SERVER then 
+            self:GetOwner():DoAnimationEvent(ACT_GMOD_GESTURE_TAUNT_ZOMBIE) 
         end
     end
 end
 
-function SWEP:ShouldDropOnDie()
-    return false
+-- --- Bond / Leap (Touche R) ---
+
+function SWEP:ZombieLeap()
+    local owner = self:GetOwner()
+    
+    if not owner:IsOnGround() then return end
+    if (self.NextLeap or 0) > CurTime() then return end
+    
+    self.NextLeap = CurTime() + 4
+
+    local force = owner:GetAimVector() * 600
+    force.z = math.max(force.z, 250) 
+
+    if SERVER then
+        owner:SetVelocity(force)
+        owner:EmitSound("npc/zombie/zo_attack1.wav", 80, 85)
+        owner:DoAnimationEvent(ACT_ZOMBIE_LEAPING)
+    end
 end
 
-function SWEP:Holster()
-    return true
+function SWEP:Reload()
+    self:ZombieLeap()
 end
 
-function SWEP:Deploy()
-    return true
-end
+function SWEP:ShouldDropOnDie() return false end
 
 if CLIENT then
-    guthscp.spawnmenu.add_weapon(SWEP, "SCP-049 SWEP")
+    guthscp.spawnmenu.add_weapon(SWEP, "SCP-049-2 (Zombie)")
 end

@@ -4,7 +4,7 @@ end
 
 -- --- Configuration du SWEP ---
 SWEP.PrintName = "SCP-049-2"
-SWEP.Author = "RevanAngel"
+SWEP.Author = "Augaton"
 SWEP.Category = "GuthSCP"
 SWEP.Instructions = "G: Attaquer | D: Crier | R: Bondir (Leap)"
 

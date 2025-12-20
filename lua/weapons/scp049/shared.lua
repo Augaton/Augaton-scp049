@@ -30,7 +30,7 @@ end
 
 -- --- SWEP CONFIG ---
 SWEP.PrintName = 'SCP-049'
-SWEP.Author = 'RevanAngel'
+SWEP.Author = 'Augaton'
 SWEP.Instructions = config049.translation_1
 SWEP.Category = 'GuthSCP'
 SWEP.Slot = 1

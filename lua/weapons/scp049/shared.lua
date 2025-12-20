@@ -23,7 +23,6 @@ if SERVER then
 
         if zombieTypes[zombieID] then 
             ply.selectedZombieType049 = zombieID
-            ply:ChatPrint("Prochain sujet : " .. zombieTypes[zombieID].name)
         end
     end)
 end
@@ -111,7 +110,7 @@ function SWEP:CallRagdollTarget(owner, target)
         
         target:UnLock()
         target:SetViewEntity(target)
-        target:Give("augscp049_zombie")
+        target:Give("scp049_zombie")
         
         target:EmitSound("npc/zombie/zombie_pain5.mp3")
         target:DoAnimationEvent(ACT_HL2MP_ZOMBIE_SLUMP_RISE)
@@ -207,4 +206,8 @@ function SWEP:DrawHUD()
         draw.RoundedBox(4, x + 2, y + 2, (w - 4) * (progress / 100), h - 4, Color(255, 0, 0, 255))
         draw.SimpleText("OPÉRATION EN COURS", "DefaultFixed", x + w / 2, y + h / 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end
+end
+
+if CLIENT then
+    guthscp.spawnmenu.add_weapon(SWEP, "SCP-049")
 end

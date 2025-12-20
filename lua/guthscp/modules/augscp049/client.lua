@@ -42,11 +42,13 @@ function augscp049.ZombieMenu()
         draw.RoundedBox(5, 0, 0, w, h, color_bg)
     end
 
-    SCPZombieMenu.Think = function(self)
-        if input.IsKeyDown(KEY_R) then
+    SCPZombieMenu.OnKeyCodePressed = function(self, key)
+        if key == KEY_R then
             self:Close()
         end
     end
+    
+    SCPZombieMenu:SetKeyBoardInputEnabled(true)
 
     local CloseButton = vgui.Create('DButton', SCPZombieMenu)
     CloseButton:SetSize(w, h / 11.3)

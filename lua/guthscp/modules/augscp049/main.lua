@@ -1,6 +1,6 @@
 local MODULE = {
     name = "SCP-049",
-    author = "RevanAngel",
+    author = "Augaton",
     version = "1.1.0",
     description = "Be the doctor. Heal your patients",
     icon = "icon16/user.png",

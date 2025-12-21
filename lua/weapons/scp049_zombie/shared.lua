@@ -2,6 +2,9 @@ if SERVER then
     AddCSLuaFile()
 end
 
+local augscp049 = guthscp.modules.augscp049
+local config049 = guthscp.configs.augscp049
+
 -- --- Configuration du SWEP ---
 SWEP.PrintName = "SCP-049-2"
 SWEP.Author = "Augaton"
@@ -123,32 +126,80 @@ function SWEP:SecondaryAttack()
     end
 end
 
--- --- Bond / Leap (Touche R) ---
+-- --- Abilities ---
 
-function SWEP:ZombieLeap()
-    local owner = self:GetOwner()
-    
-    if not owner:IsOnGround() then return end
-    if (self.NextLeap or 0) > CurTime() then return end
-    
-    self.NextLeap = CurTime() + 4
-
-    local force = owner:GetAimVector() * 600
-    force.z = math.max(force.z, 250) 
-
-    if SERVER then
-        owner:SetVelocity(force)
-        owner:EmitSound("npc/zombie/zo_attack1.wav", 80, 85)
-        owner:DoAnimationEvent(ACT_ZOMBIE_LEAPING)
-    end
-end
+-- Cooldowns et Durées
+SWEP.Abilities = {
+    ["scout"] = { cd = 4 },
+    ["normal"] = { duration = 7, cd = 18, speed_mult = 1.5 },
+    ["juggernaut"] = { duration = 5, cd = 20, range = 300 }
+}
 
 function SWEP:Reload()
-    self:ZombieLeap()
+    local owner = self:GetOwner()
+    if not IsValid(owner) or (self.NextAbility or 0) > CurTime() then return end
+
+    -- On récupère le type via le modèle ou le nom (selon ta config 049)
+    local model = owner:GetModel()
+    local type = "normal" -- Par défaut
+
+    if model == config049.scout_model then type = "scout"
+    elseif model == config049.jugg_model then type = "juggernaut" end
+
+    local cfg = self.Abilities[type]
+
+    -- --- SCOUT : LEAP ---
+    if type == "scout" then
+        if not owner:IsOnGround() then return end
+        self.NextAbility = CurTime() + cfg.cd
+        
+        local force = owner:GetAimVector() * 700
+        force.z = math.max(force.z, 300)
+        
+        if SERVER then
+            owner:SetVelocity(force)
+            owner:EmitSound("npc/zombie/zo_attack1.wav", 80, 110)
+            owner:DoAnimationEvent(ACT_ZOMBIE_LEAPING)
+        end
+
+    -- --- NORMAL : ACCÉLÉRATION ---
+    elseif type == "normal" then
+        self.NextAbility = CurTime() + cfg.cd
+        local oldSpeed = owner:GetRunSpeed()
+        
+        owner:SetRunSpeed(oldSpeed * cfg.speed_mult)
+        owner:EmitSound("npc/zombie/zombie_alert1.wav", 75, 120)
+        
+        if SERVER then
+            owner:ScreenFade(SCREENFADE.IN, Color(255, 255, 255, 50), 0.5, 0)
+            timer.Simple(cfg.duration, function()
+                if IsValid(owner) then owner:SetRunSpeed(oldSpeed) end
+            end)
+        end
+
+    -- --- JUGGERNAUT : TANK (REDIRECTION) ---
+    elseif type == "juggernaut" then
+        self.NextAbility = CurTime() + cfg.cd
+        
+        if SERVER then
+            owner:SetNWBool("JuggActive", true)
+            owner:EmitSound("npc/zombie/zombie_die2.wav", 85, 80)
+            
+            -- Effet visuel simple
+            owner:SetColor(Color(255, 100, 100)) 
+
+            timer.Simple(cfg.duration, function()
+                if IsValid(owner) then 
+                    owner:SetNWBool("JuggActive", false) 
+                    owner:SetColor(Color(255, 255, 255))
+                end
+            end)
+        end
+    end
 end
 
 function SWEP:ShouldDropOnDie() return false end
 
 if CLIENT then
-    guthscp.spawnmenu.add_weapon(SWEP, "SCP-049-2 (Zombie)")
+    guthscp.spawnmenu.add_weapon(SWEP, "SCPs-Extra")
 end

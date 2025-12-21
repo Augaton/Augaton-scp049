@@ -23,3 +23,30 @@ hook.Add("EntityTakeDamage", "augscp049:prevent_damage", function(target, dmginf
         return true
     end
 end)
+
+hook.Add("EntityTakeDamage", "SCP049_JuggernautRedirection", function(target, dmginfo)
+    if target:IsPlayer() and augscp049.is_scp_049_zombie(target) and not target:GetNWBool("JuggActive") then
+        
+        for _, ply in ipairs(player.GetAll()) do
+            if ply:GetNWBool("JuggActive") and ply:Alive() then
+                local dist = ply:GetPos():DistToSqr(target:GetPos())
+                local range = 300 * 300 
+
+                if dist < range then
+                    local originalDamage = dmginfo:GetDamage()
+                    local redirectedDamage = originalDamage * 0.25
+                    
+                    ply:TakeDamage(redirectedDamage, dmginfo:GetAttacker(), dmginfo:GetInflictor())
+                    
+                    dmginfo:SetDamage(0)
+                    
+                    local ed = EffectData()
+                    ed:SetOrigin(target:GetPos() + Vector(0,0,40))
+                    util.Effect("ElectricSpark", ed)
+                    
+                    return
+                end
+            end
+        end
+    end
+end)

@@ -7,7 +7,8 @@ end
 
 local augscp049 = guthscp.modules.augscp049
 local config049 = guthscp.configs.augscp049
-local dist_sqr = 125 * 125 
+
+local dist_sqr = 15625
 
 -- --- NETWORK ---
 if SERVER then
@@ -55,19 +56,13 @@ function SWEP:Deploy()
 end
 
 function SWEP:HealZombie(target)
-    if not IsValid(target) or not target:IsPlayer() or not target:GetNWBool("IsZombie", false) then return end
-    
-    local healTime = config049.heal_time or 2
     if (self.NextHeal or 0) > CurTime() then return end
-    self.NextHeal = CurTime() + 0.2 -- Soin par petits tics
+    self.NextHeal = CurTime() + 0.5
 
     local maxHP = target:GetMaxHealth()
     if target:Health() < maxHP then
-        target:SetHealth(math.min(target:Health() + 2, maxHP))
-        if (self.NextSound or 0) < CurTime() then
-            self:EmitSound('buttons/blip1.wav', 60, 100)
-            self.NextSound = CurTime() + 0.5
-        end
+        target:SetHealth(math.min(target:Health() + 4, maxHP))
+        target:EmitSound("npc/zombie/zombie_alert".. math.random(1, 3) ..".wav")
     end
 end
 
@@ -125,21 +120,16 @@ function SWEP:Think()
         return
     end
 
-    -- Gestion du HoldType dynamique (S'approche d'un joueur)
-    local tr = self:GetOwner():GetEyeTrace()
+    local owner = self:GetOwner()
+    local tr = owner:GetEyeTrace()
     local ent = tr.Entity
-    if IsValid(ent) and ent:IsPlayer() and ent:GetPos():DistToSqr(self:GetOwner():GetPos()) < dist_sqr then
-        if self:GetHoldType() ~= "pistol" then self:SetHoldType("pistol") end
-    else
-        if self:GetHoldType() ~= "normal" then self:SetHoldType("normal") end
-    end
+    local isNear = IsValid(ent) and ent:IsPlayer() and ent:GetPos():DistToSqr(owner:GetPos()) < 15625 -- 125 units
 
-    -- Secondaire (Soin)
-    if self:GetOwner():KeyDown(IN_ATTACK2) then
-        local target = self:GetOwner():GetEyeTrace().Entity
-        if IsValid(target) and target:GetPos():DistToSqr(self:GetOwner():GetPos()) < dist_sqr then
-            self:HealZombie(target)
-        end
+    local targetType = isNear and "pistol" or "normal"
+    if self:GetHoldType() != targetType then self:SetHoldType(targetType) end
+
+    if owner:KeyDown(IN_ATTACK2) and isNear and augscp049.is_scp_049_zombie(ent) then
+        self:HealZombie(ent)
     end
 end
 
@@ -209,5 +199,5 @@ function SWEP:DrawHUD()
 end
 
 if CLIENT then
-    guthscp.spawnmenu.add_weapon(SWEP, "SCP-049")
+    guthscp.spawnmenu.add_weapon(SWEP, "SCPs")
 end

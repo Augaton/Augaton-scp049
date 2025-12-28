@@ -137,6 +137,12 @@ function SWEP:PrimaryAttack()
     if not SERVER then return end
     
     local owner = self:GetOwner()
+
+    if owner:GetNWBool("049_Stunned") then 
+        owner:ChatPrint("Vous êtes trop affaibli par l'odeur pour opérer !")
+        return 
+    end
+
     local tr = owner:GetEyeTrace()
     local target = tr.Entity
 

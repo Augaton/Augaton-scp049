@@ -86,7 +86,21 @@ function augscp049.ZombieMenu()
         ZombieModel:SetSize(modelW, modelH)
         ZombieModel:SetPos(posX - modelW / 2, h / 2.1 - modelH / 2)
         ZombieModel:SetModel(v.model)
-        ZombieModel:SetFOV(45)
+        ZombieModel:SetFOV(35) -- Zoom un peu plus serré pour voir les détails
+        ZombieModel:SetCamPos(Vector(60, 0, 50))
+        ZombieModel:SetLookAt(Vector(0, 0, 40))
+
+        function ZombieModel:LayoutEntity(ent)
+            -- On force l'animation de marche du zombie
+            local sequence = ent:LookupSequence("walk_zombie_01")
+            if sequence <= 0 then sequence = ent:LookupSequence("walk_all") end -- Fallback
+            
+            ent:SetSequence(sequence)
+            self:RunAnimation() -- Joue l'animation dans le menu
+            
+            -- Rotation fluide
+            ent:SetAngles(Angle(0, RealTime() * 40, 0))
+        end
         
         -- Button
         local ZombieButton = vgui.Create('DButton', SCPZombieMenu)
@@ -116,3 +130,25 @@ function augscp049.ZombieMenu()
         ZombieModel.DoClick = click
     end
 end
+
+hook.Add("RenderScreenspaceEffects", "049_Lavender_Blur", function()
+    local ply = LocalPlayer()
+    if ply:GetNWBool("049_Stunned") then
+        local intensity = 0.05
+        DrawMotionBlur(0.1, 0.8, 0.01)
+        DrawSharpen(intensity, 5)
+        
+        local tab = {
+            ["$pp_colour_addr"] = 0.1,
+            ["$pp_colour_addg"] = 0,
+            ["$pp_colour_addb"] = 0.2,
+            ["$pp_colour_brightness"] = -0.05,
+            ["$pp_colour_contrast"] = 0.9,
+            ["$pp_colour_colour"] = 0.5,
+            ["$pp_colour_mulr"] = 0,
+            ["$pp_colour_mulg"] = 0,
+            ["$pp_colour_mulb"] = 0
+        }
+        DrawColorModify(tab)
+    end
+end)

@@ -3,13 +3,12 @@ if SERVER then
 end
 
 local augscp049 = guthscp.modules.augscp049
-local config049 = guthscp.configs.augscp049
 
 -- --- Configuration du SWEP ---
 SWEP.PrintName = "SCP-049-2"
 SWEP.Author = "Augaton"
 SWEP.Category = "GuthSCP"
-SWEP.Instructions = "G: Attaquer | D: Crier | R: Bondir (Leap)"
+SWEP.Instructions = "G: Attaquer | D: Crier | R: Abilité (zombies légendaires)"
 
 SWEP.Spawnable = true
 SWEP.AdminOnly = false
@@ -101,6 +100,15 @@ function SWEP:PrimaryAttack()
             dmg:SetInflictor(self)
             dmg:SetDamageType(DMG_CLUB)
             trace.Entity:TakeDamageInfo(dmg)
+
+            -- Passif lifesteal : soin sur coup porté à un être vivant
+            if (trace.Entity:IsPlayer() or trace.Entity:IsNPC()) and owner.scp049_passive == "lifesteal" then
+                local heal = augscp049.Passives.lifesteal.heal_per_hit
+                local maxhp = owner:GetMaxHealth()
+                if owner:Health() < maxhp then
+                    owner:SetHealth(math.min(owner:Health() + heal, maxhp))
+                end
+            end
         end
 
         local effectData = EffectData()
@@ -132,21 +140,21 @@ end
 SWEP.Abilities = {
     ["scout"] = { cd = 4 },
     ["normal"] = { duration = 7, cd = 18, speed_mult = 1.5 },
-    ["juggernaut"] = { duration = 5, cd = 20, range = 300 }
+    ["juggernaut"] = { duration = 5, cd = 20, range = 300 },
+    ["brute"] = { cd = 12, range = 220, damage = 35, knockback = 260 }
 }
 
 function SWEP:Reload()
     local owner = self:GetOwner()
     if not IsValid(owner) or (self.NextAbility or 0) > CurTime() then return end
 
-    -- On récupère le type via le modèle ou le nom (selon ta config 049)
-    local model = owner:GetModel()
-    local type = "normal" -- Par défaut
-
-    if model == config049.scout_model then type = "scout"
-    elseif model == config049.jugg_model then type = "juggernaut" end
+    -- Seuls les zombies légendaires possèdent une abilité active
+    local data = augscp049.GetZombieById(owner:GetNWString("scp049_zombie_id"))
+    local type = data and data.ability
+    if not type then return end
 
     local cfg = self.Abilities[type]
+    if not cfg then return end
 
     -- --- SCOUT : LEAP ---
     if type == "scout" then
@@ -189,11 +197,46 @@ function SWEP:Reload()
             owner:SetColor(Color(255, 100, 100)) 
 
             timer.Simple(cfg.duration, function()
-                if IsValid(owner) then 
-                    owner:SetNWBool("JuggActive", false) 
+                if IsValid(owner) then
+                    owner:SetNWBool("JuggActive", false)
                     owner:SetColor(Color(255, 255, 255))
                 end
             end)
+        end
+
+    -- --- BRUTE : SLAM (AoE) ---
+    elseif type == "brute" then
+        self.NextAbility = CurTime() + cfg.cd
+
+        if SERVER then
+            owner:EmitSound("npc/zombie/zombie_die1.wav", 90, 85)
+            owner:DoAnimationEvent(ACT_GMOD_GESTURE_TAUNT_ZOMBIE)
+
+            local center = owner:WorldSpaceCenter()
+            for _, e in ipairs(ents.FindInSphere(center, cfg.range)) do
+                if IsValid(e) and e ~= owner and (e:IsPlayer() or e:IsNPC())
+                    and not augscp049.is_scp_049_zombie(e) and not augscp049.is_scp_049(e) then
+
+                    local dmg = DamageInfo()
+                    dmg:SetDamage(cfg.damage)
+                    dmg:SetAttacker(owner)
+                    dmg:SetInflictor(self)
+                    dmg:SetDamageType(DMG_CLUB)
+                    e:TakeDamageInfo(dmg)
+
+                    if e:IsPlayer() then
+                        local dir = e:GetPos() - center
+                        dir.z = 0
+                        dir:Normalize()
+                        e:SetVelocity(dir * cfg.knockback + Vector(0, 0, 150))
+                    end
+                end
+            end
+
+            local ed = EffectData()
+            ed:SetOrigin(center)
+            ed:SetScale(cfg.range)
+            util.Effect("ThumperDust", ed)
         end
     end
 end

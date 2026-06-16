@@ -10,24 +10,6 @@ local config049 = guthscp.configs.augscp049
 
 local dist_sqr = 15625
 
--- --- NETWORK ---
-if SERVER then
-    util.AddNetworkString('scp049-change-zombie')
-
-    net.Receive('scp049-change-zombie', function(len, ply)
-        if not IsValid(ply) or not augscp049.is_scp_049(ply) then return end
-        if (ply.nextZombieChange or 0) > CurTime() then return end
-        
-        ply.nextZombieChange = CurTime() + 0.5
-        local zombieID = net.ReadInt(7)
-        local zombieTypes = augscp049.GetZombieTypes049()
-
-        if zombieTypes[zombieID] then 
-            ply.selectedZombieType049 = zombieID
-        end
-    end)
-end
-
 -- --- SWEP CONFIG ---
 SWEP.PrintName = 'SCP-049'
 SWEP.Author = 'Augaton'
@@ -68,18 +50,23 @@ end
 
 function SWEP:CallRagdollTarget(owner, target)
     if not IsValid(target) or not target:Alive() then return end
-    
+
+    -- L'aura conditionne le résultat : verte = reste mort, rouge/mauve = réanimé.
+    -- Le type de zombie est tiré au hasard selon la rareté (ratio x2 sur mauve).
+    local aura = augscp049.GetAura(target)
+    local data = augscp049.RollZombieType(aura)
+
     target:SetNoDraw(true)
     target:Lock()
     target:StripWeapons()
-    
+
     local ragdoll = ents.Create("prop_ragdoll")
     ragdoll:SetModel(target:GetModel())
     ragdoll:SetPos(target:GetPos())
     ragdoll:SetAngles(target:GetAngles())
     ragdoll:Spawn()
     ragdoll:SetCollisionGroup(COLLISION_GROUP_WEAPON)
-    
+
     local phys = ragdoll:GetPhysicsObject()
     if IsValid(phys) then phys:ApplyForceCenter(owner:GetForward() * 1000) end
 
@@ -88,13 +75,20 @@ function SWEP:CallRagdollTarget(owner, target)
     timer.Simple(3, function()
         if not IsValid(target) then if IsValid(ragdoll) then ragdoll:Remove() end return end
 
-        target:SetNoDraw(false)
-        target:SetPos(ragdoll:GetPos() + Vector(0,0,10))
-        if IsValid(ragdoll) then ragdoll:Remove() end
+        -- Aura verte : aucun zombie ne se lève, le sujet reste mort.
+        if not data then
+            target:SetViewEntity(target)
+            target:SetNoDraw(false)
+            target:UnLock()
+            if IsValid(ragdoll) then ragdoll:Remove() end
+            target:Kill()
+            if IsValid(owner) then owner:ChatPrint(config049.translation_3) end
+            return
+        end
 
-        local zTypes = augscp049.GetZombieTypes049()
-        local selectedID = owner.selectedZombieType049 or 1
-        local data = zTypes[selectedID] or zTypes[1]
+        target:SetNoDraw(false)
+        target:SetPos(ragdoll:GetPos() + Vector(0, 0, 10))
+        if IsValid(ragdoll) then ragdoll:Remove() end
 
         target:SetModel(data.model)
         target:SetMaxHealth(data.health)
@@ -102,20 +96,33 @@ function SWEP:CallRagdollTarget(owner, target)
         target:SetWalkSpeed(data.speed)
         target:SetRunSpeed(data.speed)
         target:SetNWBool("IsZombie", true)
-        
+        target:SetNWString("scp049_zombie_id", data.id)
+        target.scp049_passive = data.passive
+
         target:UnLock()
         target:SetViewEntity(target)
         target:Give("scp049_zombie")
-        
+
         target:EmitSound("npc/zombie/zombie_pain5.mp3")
         target:DoAnimationEvent(ACT_HL2MP_ZOMBIE_SLUMP_RISE)
+
+        if IsValid(owner) then
+            local info = data.name .. " [" .. data.tier
+            if data.passive then info = info .. " / " .. data.passive end
+            owner:ChatPrint(info .. "]")
+        end
     end)
 end
 
 function SWEP:Think()
     if CLIENT then
-        if self:GetOwner():KeyPressed(IN_RELOAD) and not IsValid(SCPZombieMenu) then
-            augscp049.ZombieMenu()
+        local owner = self:GetOwner()
+        if owner:KeyPressed(IN_RELOAD) then
+            local ent = owner:GetEyeTrace().Entity
+            if IsValid(ent) and ent:IsPlayer() then
+                net.Start("scp049-scan-aura")
+                net.SendToServer()
+            end
         end
         return
     end
@@ -123,7 +130,7 @@ function SWEP:Think()
     local owner = self:GetOwner()
     local tr = owner:GetEyeTrace()
     local ent = tr.Entity
-    local isNear = IsValid(ent) and ent:IsPlayer() and ent:GetPos():DistToSqr(owner:GetPos()) < 15625 -- 125 units
+    local isNear = IsValid(ent) and ent:IsPlayer() and ent:GetPos():DistToSqr(owner:GetPos()) < dist_sqr
 
     local targetType = isNear and "pistol" or "normal"
     if self:GetHoldType() != targetType then self:SetHoldType(targetType) end
@@ -135,23 +142,23 @@ end
 
 function SWEP:PrimaryAttack()
     if not SERVER then return end
-    
+
     local owner = self:GetOwner()
     local tr = owner:GetEyeTrace()
     local target = tr.Entity
 
     if not IsValid(target) or not (target:IsPlayer() or target:IsNPC()) then return end
     if target:GetPos():DistToSqr(owner:GetPos()) > dist_sqr then return end
-    
+
     -- Checks de sécurité
     if target:GetNWBool("IsZombie") then return end
     if config049.ignore_scps and guthscp.is_scp(target) then return end
-    
+
     self:SetNextPrimaryFire(CurTime() + 2)
 
     if config049.progressbar then
         if timer.Exists("049_proc_" .. owner:EntIndex()) then return end
-        
+
         owner:SetNWBool("scp049_Infected", true)
         self:SetNWFloat("Progress", 0)
 
@@ -187,14 +194,23 @@ end
 
 function SWEP:DrawHUD()
     local ply = self:GetOwner()
+
     if ply:GetNWBool("scp049_Infected") then
         local progress = self:GetNWFloat("Progress", 0)
         local w, h = 200, 20
         local x, y = ScrW() / 2 - w / 2, ScrH() * 0.8
-        
+
         draw.RoundedBox(4, x, y, w, h, Color(0, 0, 0, 200))
         draw.RoundedBox(4, x + 2, y + 2, (w - 4) * (progress / 100), h - 4, Color(255, 0, 0, 255))
         draw.SimpleText("OPÉRATION EN COURS", "DefaultFixed", x + w / 2, y + h / 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
+
+    local scan = augscp049.GetActiveScan and augscp049.GetActiveScan()
+    if scan then
+        local data = augscp049.GetAuraData()[scan.aura]
+        if data then
+            draw.SimpleText(data.label, "scp-sweps1", ScrW() / 2, ScrH() * 0.72, data.color, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        end
     end
 end
 

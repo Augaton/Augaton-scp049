@@ -5,6 +5,11 @@ local augscp049 = guthscp.modules.augscp049
 ----------------------------------------------------------------------------
     Pour ajouter un zombie : copie un bloc et change les valeurs.
 
+    Chaque tier propose les 3 gabarits de base, pour une variété homogène :
+      scout   -> peu de PV, rapide          (modèle : zombie_fast)
+      normal  -> équilibré                   (modèle : zombie_classic)
+      armored -> beaucoup de PV, lent        (modèle : zombie_soldier)
+
     Champs :
       id        = identifiant unique (texte sans espace)
       name      = nom affiché
@@ -30,71 +35,76 @@ local augscp049 = guthscp.modules.augscp049
       scout      -> bond (leap)
       normal     -> accélération temporaire
       juggernaut -> redirige les dégâts des zombies alliés proches
-      brute      -> slam : dégâts de zone + recul
+      brute      -> slam : dégâts de zone + recul  (dispo, non utilisée par défaut)
 --]]
 
 augscp049.ZombieRoster = {
 
-    -- ----- COMMUN : stats simples -----
+    -- ===== COMMUN : stats simples =====
     {
-        id = "husk", name = "Common Husk", tier = "common",
-        model = "models/player/zombie_classic.mdl",
-        health = 600, speed = 200,
-    },
-    {
-        id = "crawler", name = "Agile Zombie", tier = "common",
+        id = "common_scout", name = "Common Scout", tier = "common",
         model = "models/player/zombie_fast.mdl",
         health = 450, speed = 250,
     },
-
-    -- ----- RARE : meilleures stats -----
     {
-        id = "stalker", name = "Stalker", tier = "rare",
+        id = "common_normal", name = "Common Zombie", tier = "common",
+        model = "models/player/zombie_classic.mdl",
+        health = 600, speed = 205,
+    },
+    {
+        id = "common_armored", name = "Common Armored", tier = "common",
+        model = "models/player/zombie_soldier.mdl",
+        health = 800, speed = 170,
+    },
+
+    -- ===== RARE : meilleures stats =====
+    {
+        id = "rare_scout", name = "Rare Scout", tier = "rare",
         model = "models/player/zombie_fast.mdl",
-        health = 900, speed = 225,
+        health = 600, speed = 250,
     },
     {
-        id = "bruiser", name = "Bruiser", tier = "rare",
+        id = "rare_normal", name = "Rare Zombie", tier = "rare",
         model = "models/player/zombie_classic.mdl",
-        health = 1100, speed = 180,
+        health = 850, speed = 210,
+    },
+    {
+        id = "rare_armored", name = "Rare Armored", tier = "rare",
+        model = "models/player/zombie_soldier.mdl",
+        health = 1100, speed = 170,
     },
 
-    -- ----- ÉPIQUE : passif + stats -----
+    -- ===== ÉPIQUE : passif + stats =====
     {
-        id = "vampire", name = "Vampire Zombie", tier = "epic",
-        model = "models/player/zombie_classic.mdl",
-        health = 1100, speed = 200, passive = "lifesteal",
-    },
-    {
-        id = "armored", name = "Armored Zombie", tier = "epic",
-        model = "models/player/zombie_soldier.mdl",
-        health = 1200, speed = 150, passive = "armor",
-    },
-    {
-        id = "revenant", name = "Revenant", tier = "epic",
-        model = "models/player/zombie_soldier.mdl",
-        health = 1200, speed = 190, passive = "regen",
-    },
-
-    -- ----- LÉGENDAIRE : abilité + passif + stats -----
-    {
-        id = "leg_scout", name = "Scout Zombie", tier = "legendary",
+        id = "epic_scout", name = "Epic Scout", tier = "epic",
         model = "models/player/zombie_fast.mdl",
-        health = 450, speed = 240, ability = "scout", passive = "lifesteal",
+        health = 800, speed = 250, passive = "lifesteal",
     },
     {
-        id = "leg_reaver", name = "Reaver Zombie", tier = "legendary",
+        id = "epic_normal", name = "Epic Zombie", tier = "epic",
         model = "models/player/zombie_classic.mdl",
-        health = 850, speed = 185, ability = "normal", passive = "regen",
+        health = 1050, speed = 205, passive = "regen",
     },
     {
-        id = "leg_jugg", name = "Juggernaut Zombie", tier = "legendary",
+        id = "epic_armored", name = "Epic Armored", tier = "epic",
         model = "models/player/zombie_soldier.mdl",
-        health = 1600, speed = 140, ability = "juggernaut", passive = "armor",
+        health = 1200, speed = 160, passive = "armor",
+    },
+
+    -- ===== LÉGENDAIRE : abilité + passif + stats =====
+    {
+        id = "leg_scout", name = "Legendary Scout", tier = "legendary",
+        model = "models/player/zombie_fast.mdl",
+        health = 950, speed = 245, ability = "scout", passive = "lifesteal",
     },
     {
-        id = "leg_brute", name = "Brute Zombie", tier = "legendary",
+        id = "leg_normal", name = "Legendary Zombie", tier = "legendary",
+        model = "models/player/zombie_classic.mdl",
+        health = 1200, speed = 205, ability = "normal", passive = "regen",
+    },
+    {
+        id = "leg_armored", name = "Legendary Juggernaut", tier = "legendary",
         model = "models/player/zombie_soldier.mdl",
-        health = 1050, speed = 165, ability = "brute", passive = "regen",
+        health = 1500, speed = 145, ability = "juggernaut", passive = "armor",
     },
 }
